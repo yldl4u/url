@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>পাসওয়ার্ড সুরক্ষিত সেফলিংক টুল</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* ফন্ট হিসেবে Inter ব্যবহার করা হয়েছে */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+        .container-box {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 0 10px rgba(0, 0, 0, 0.05);
+            max-width: 90%;
+            margin: 1rem auto;
+        }
+        .input-style {
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .input-style:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            outline: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="container-box w-full max-w-lg">
+        <h1 class="text-3xl font-extrabold text-gray-900 mb-6 text-center border-b pb-3">
+            🔐 সেফলিংক টুল
+        </h1>
+
+        <!-- Loader/Message Area -->
+        <div id="message-box" class="hidden p-4 mb-4 rounded-lg text-sm font-medium text-center" role="alert"></div>
+
+        <!-- Section 1: Link Creator -->
+        <div id="creator-section">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">নতুন সেফলিংক তৈরি করুন</h2>
+
+            <div class="mb-4">
+                <label for="target-url" class="block text-sm font-medium text-gray-700 mb-2">গন্তব্য URL (যেখানে লিংক যাবে):</label>
+                <input type="url" id="target-url" placeholder="https://example.com" class="input-style" required>
+            </div>
+
+            <div class="mb-6">
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">পাসওয়ার্ড সেট করুন:</label>
+                <input type="password" id="password" placeholder="একটি শক্তিশালী পাসওয়ার্ড দিন" class="input-style" required>
+            </div>
+
+            <button id="create-btn" onclick="createSafelink()"
+                    class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition duration-150 shadow-lg active:bg-blue-800">
+                সেফলিংক তৈরি করুন
+            </button>
+
+            <!-- Generated Link Output -->
+            <div id="result-box" class="hidden mt-6 bg-gray-100 p-4 rounded-lg border border-dashed border-gray-300">
+                <p class="text-sm font-medium text-gray-700 mb-2">আপনার সুরক্ষিত লিংক:</p>
+                <input type="text" id="generated-link" readonly class="input-style bg-gray-50 text-blue-600 font-mono text-xs cursor-text select-all" onclick="this.select()">
+                <button onclick="copyToClipboard('generated-link')" class="mt-2 w-full py-2 text-sm bg-green-500 text-white rounded-lg hover:bg-green-600 transition">
+                    কপি করুন
+                </button>
+            </div>
+        </div>
+
+        <!-- Section 2: Link Unlocker & Countdown -->
+        <div id="unlocker-section" class="hidden text-center">
+            <div id="countdown-display" class="hidden">
+                <svg class="animate-spin h-10 w-10 text-blue-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="text-2xl font-bold text-blue-600 mb-2">লিংক খুলছে...</p>
+                <p class="text-6xl font-extrabold text-gray-900" id="timer">10</p>
+                <p class="text-lg text-gray-500 mt-2">অপেক্ষা করুন।</p>
+            </div>
+
+            <div id="password-form">
+                <h2 class="text-xl font-semibold mb-4 text-gray-700">সুরক্ষিত লিংকটি আনলক করুন</h2>
+                <div class="mb-6">
+                    <label for="unlock-password" class="block text-sm font-medium text-gray-700 mb-2">পাসওয়ার্ড দিন:</label>
+                    <input type="password" id="unlock-password" placeholder="পাসওয়ার্ড লিখুন" class="input-style" required>
+                </div>
+                <button id="unlock-btn" onclick="unlockLink()"
+                        class="w-full py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition duration-150 shadow-lg active:bg-red-800">
+                    লিংক আনলক করুন
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, addDoc, getDoc, collection, setDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        
+        // GLOBAL VARIABLES from Canvas Environment
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
+        let db;
+        let auth;
+        let isAuthReady = false;
+
+        // Utility: Display messages
+        const displayMessage = (message, type = 'info') => {
+            const box = document.getElementById('message-box');
+            let bgColor = 'bg-blue-100 border-blue-400 text-blue-700';
+            if (type === 'error') bgColor = 'bg-red-100 border-red-400 text-red-700';
+            if (type === 'success') bgColor = 'bg-green-100 border-green-400 text-green-700';
+            
+            box.className = `p-4 mb-4 rounded-lg text-sm font-medium text-center border ${bgColor}`;
+            box.innerHTML = message;
+            box.classList.remove('hidden');
+        };
+
+        const hideMessage = () => {
+            document.getElementById('message-box').classList.add('hidden');
+        };
+
+        // Utility: Simple Hashing (Simulating SHA-256 for password comparison)
+        async function hashPassword(password) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(password);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        // --- FIREBASE INITIALIZATION & AUTHENTICATION ---
+        try {
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            
+            if (initialAuthToken) {
+                signInWithCustomToken(auth, initialAuthToken)
+                    .then(() => {
+                        console.log("Custom sign-in successful.");
+                        isAuthReady = true;
+                        checkUrlForLink();
+                    })
+                    .catch((error) => {
+                        console.error("Custom sign-in failed. Falling back to anonymous.", error);
+                        signInAnonymously(auth).then(() => {
+                            isAuthReady = true;
+                            checkUrlForLink();
+                        });
+                    });
+            } else {
+                signInAnonymously(auth)
+                    .then(() => {
+                        console.log("Anonymous sign-in successful.");
+                        isAuthReady = true;
+                        checkUrlForLink();
+                    })
+                    .catch((error) => {
+                        console.error("Anonymous sign-in failed:", error);
+                        displayMessage("ফায়ারবেস অথেন্টিকেশনে সমস্যা। অ্যাপ কাজ করবে না।", 'error');
+                    });
+            }
+        } catch (e) {
+            console.error("Firebase Initialization Error:", e);
+            displayMessage("অ্যাপ ইনিশিয়ালাইজেশন ব্যর্থ হয়েছে। কনসোল দেখুন।", 'error');
+        }
+
+
+        // --- LINK CREATOR LOGIC (Section 1) ---
+        window.createSafelink = async function() {
+            if (!isAuthReady) {
+                displayMessage("দয়া করে অপেক্ষা করুন, ফায়ারবেস লোড হচ্ছে...", 'info');
+                return;
+            }
+
+            const urlInput = document.getElementById('target-url');
+            const passwordInput = document.getElementById('password');
+            const resultBox = document.getElementById('result-box');
+            
+            hideMessage();
+
+            const targetUrl = urlInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (!targetUrl || !password) {
+                displayMessage("দয়া করে লক্ষ্য URL এবং একটি পাসওয়ার্ড লিখুন।", 'error');
+                return;
+            }
+            if (!urlInput.checkValidity()) {
+                 displayMessage("একটি বৈধ URL লিখুন।", 'error');
+                 return;
+            }
+            
+            document.getElementById('create-btn').disabled = true;
+            document.getElementById('create-btn').textContent = "তৈরি হচ্ছে...";
+
+            try {
+                // 1. Hash the password
+                const passwordHash = await hashPassword(password);
+                
+                // 2. Define the public collection path
+                const collectionPath = `artifacts/${appId}/public/data/safelinks`;
+
+                // 3. Save to Firestore and get the document ID
+                const docRef = await addDoc(collection(db, collectionPath), {
+                    targetUrl: targetUrl,
+                    passwordHash: passwordHash,
+                    createdAt: new Date().toISOString(),
+                    creatorId: auth.currentUser.uid 
+                });
+
+                // 4. Generate the shareable link (using current page URL and document ID)
+                const baseUrl = window.location.origin + window.location.pathname;
+                const safeLink = `${baseUrl}?id=${docRef.id}`;
+
+                // 5. Display result
+                document.getElementById('generated-link').value = safeLink;
+                resultBox.classList.remove('hidden');
+                displayMessage("সেফলিংক সফলভাবে তৈরি হয়েছে! নিচে কপি করুন।", 'success');
+
+            } catch (e) {
+                console.error("Error creating safelink:", e);
+                displayMessage(`লিংক তৈরি করতে ব্যর্থ: ${e.message}`, 'error');
+            } finally {
+                document.getElementById('create-btn').disabled = false;
+                document.getElementById('create-btn').textContent = "সেফলিংক তৈরি করুন";
+            }
+        }
+
+        // --- LINK UNLOCKER LOGIC (Section 2) ---
+        let linkData = null; // Stores the fetched Firestore document data
+
+        async function fetchLinkData(docId) {
+            if (!isAuthReady) {
+                displayMessage("দয়া করে অপেক্ষা করুন, ফায়ারবেস লোড হচ্ছে...", 'info');
+                return null;
+            }
+            
+            const collectionPath = `artifacts/${appId}/public/data/safelinks`;
+            const docRef = doc(db, collectionPath, docId);
+
+            try {
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    return docSnap.data();
+                } else {
+                    displayMessage("দুঃখিত, এই সেফলিংকটি খুঁজে পাওয়া যায়নি বা মেয়াদ উত্তীর্ণ হয়েছে।", 'error');
+                    return null;
+                }
+            } catch (e) {
+                console.error("Error fetching document:", e);
+                displayMessage("ডাটাবেস থেকে তথ্য আনতে ব্যর্থ।", 'error');
+                return null;
+            }
+        }
+
+        async function checkUrlForLink() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+
+            if (id) {
+                // Show Unlocker Section
+                document.getElementById('creator-section').classList.add('hidden');
+                document.getElementById('unlocker-section').classList.remove('hidden');
+
+                // Fetch data
+                displayMessage("লিংক ডেটা লোড হচ্ছে...", 'info');
+                linkData = await fetchLinkData(id);
+                hideMessage();
+
+                if (!linkData) {
+                    document.getElementById('password-form').classList.add('hidden');
+                }
+            } else {
+                // Show Creator Section (Default)
+                document.getElementById('creator-section').classList.remove('hidden');
+                document.getElementById('unlocker-section').classList.add('hidden');
+            }
+        }
+
+        window.unlockLink = async function() {
+            const unlockPassword = document.getElementById('unlock-password').value.trim();
+            
+            if (!unlockPassword) {
+                displayMessage("দয়া করে পাসওয়ার্ড লিখুন।", 'error');
+                return;
+            }
+            
+            document.getElementById('unlock-btn').disabled = true;
+            document.getElementById('unlock-btn').textContent = "চেক করা হচ্ছে...";
+            hideMessage();
+
+            if (!linkData) {
+                displayMessage("লিংকের ডেটা লোড হয়নি। পেজ রিফ্রেশ করে আবার চেষ্টা করুন।", 'error');
+                document.getElementById('unlock-btn').disabled = false;
+                document.getElementById('unlock-btn').textContent = "লিংক আনলক করুন";
+                return;
+            }
+
+            try {
+                const enteredHash = await hashPassword(unlockPassword);
+                
+                if (enteredHash === linkData.passwordHash) {
+                    displayMessage("পাসওয়ার্ড সঠিক! ১০ সেকেন্ড অপেক্ষা করুন...", 'success');
+                    document.getElementById('password-form').classList.add('hidden');
+                    document.getElementById('countdown-display').classList.remove('hidden');
+                    startCountdown(linkData.targetUrl);
+                } else {
+                    displayMessage("ভুল পাসওয়ার্ড। আবার চেষ্টা করুন।", 'error');
+                }
+            } catch (e) {
+                console.error("Error during unlocking:", e);
+                displayMessage("আনলক করার সময় ত্রুটি হয়েছে।", 'error');
+            } finally {
+                document.getElementById('unlock-btn').disabled = false;
+                document.getElementById('unlock-btn').textContent = "লিংক আনলক করুন";
+            }
+        }
+
+        // --- COUNTDOWN LOGIC ---
+        function startCountdown(targetUrl) {
+            let countdown = 10;
+            const timerDisplay = document.getElementById('timer');
+            
+            timerDisplay.textContent = countdown;
+
+            const interval = setInterval(() => {
+                countdown--;
+                timerDisplay.textContent = countdown;
+
+                if (countdown <= 0) {
+                    clearInterval(interval);
+                    timerDisplay.textContent = '০';
+                    displayMessage("রিডাইরেক্ট হচ্ছে...", 'success');
+                    // Actual redirection
+                    window.location.href = targetUrl;
+                }
+            }, 1000);
+        }
+
+        // --- CLIPBOARD UTILITY ---
+        window.copyToClipboard = function(elementId) {
+            const input = document.getElementById(elementId);
+            input.select();
+            input.setSelectionRange(0, 99999); // For mobile devices
+            try {
+                document.execCommand('copy');
+                displayMessage("লিংক কপি করা হয়েছে!", 'success');
+            } catch (err) {
+                displayMessage("কপি করতে ব্যর্থ হয়েছেন। ম্যানুয়ালি কপি করুন।", 'error');
+            }
+        }
+
+        // Initialize check when auth is ready (called inside the auth block)
+        // checkUrlForLink();
+        
+    </script>
+</body>
+</html>
+
