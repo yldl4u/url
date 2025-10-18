@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Client-Only URL Hider</title>
+    <!-- Tailwind CSS CDN for modern aesthetics -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Using Inter font */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7f9fb;
+        }
+        .container-box {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 0 10px rgba(0, 0, 0, 0.05);
+            max-width: 90%;
+            margin: 1rem auto;
+        }
+        .input-style {
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .input-style:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+            outline: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div class="container-box w-full max-w-lg">
+        <h1 class="text-3xl font-extrabold text-gray-900 mb-6 text-center border-b pb-3">
+            🔗 Client-Only URL Hider & Delay
+        </h1>
+
+        <!-- Loader/Message Area -->
+        <div id="message-box" class="hidden p-4 mb-4 rounded-lg text-sm font-medium text-center" role="alert"></div>
+
+        <!-- Section 1: Link Creator -->
+        <div id="creator-section">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">Encode and Hide URL</h2>
+
+            <div class="mb-6">
+                <label for="target-url" class="block text-sm font-medium text-gray-700 mb-2">Target URL (The link to hide):</label>
+                <input type="url" id="target-url" placeholder="https://your-destination.com" class="input-style" required>
+            </div>
+
+            <button id="create-btn" onclick="createSafelink()"
+                    class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition duration-150 shadow-lg active:bg-blue-800">
+                Generate Hidden Link
+            </button>
+
+            <!-- Generated Link Output -->
+            <div id="result-box" class="hidden mt-6 bg-gray-100 p-4 rounded-lg border border-dashed border-gray-300">
+                <p class="text-sm font-medium text-gray-700 mb-2">Your Hidden Link:</p>
+                <input type="text" id="generated-link" readonly class="input-style bg-gray-50 text-blue-600 font-mono text-xs cursor-text select-all" onclick="this.select()">
+                <button onclick="copyToClipboard('generated-link')" class="mt-2 w-full py-2 text-sm bg-green-500 text-white rounded-lg hover:bg-green-600 transition">
+                    Copy Link
+                </button>
+            </div>
+        </div>
+
+        <!-- Section 2: Link Unlocker & Countdown (Now just the Countdown) -->
+        <div id="unlocker-section" class="hidden text-center">
+
+            <!-- Hidden Form placeholder removed -->
+
+            <div id="countdown-display">
+                <p class="text-xl font-semibold mb-4 text-gray-700">Your link is ready.</p>
+                <svg class="animate-spin h-10 w-10 text-blue-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="text-2xl font-bold text-blue-600 mb-2">Redirecting in...</p>
+                <p class="text-6xl font-extrabold text-gray-900" id="timer">5</p>
+                <p class="text-lg text-gray-500 mt-2">Please wait 5 seconds before redirection.</p>
+            </div>
+        </div>
+        
+        <!-- Footer Credit -->
+        <div class="mt-8 pt-4 border-t border-gray-200 text-center">
+            <p class="text-xs text-gray-500">
+                Created by Yldl4u
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Only Base64URL encoding is used, no cryptographic constants are needed.
+
+        // --- Utility Functions for ArrayBuffer <-> Base64URL ---
+
+        /** Converts a Base64URL string to an ArrayBuffer. */
+        function base64UrlToArrayBuffer(base64Url) {
+            let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            // Pad to multiple of 4
+            while (base64.length % 4) {
+                base64 += '=';
+            }
+            const raw = window.atob(base64);
+            const outputArray = new Uint8Array(raw.length);
+            for (let i = 0; i < raw.length; i++) {
+                outputArray[i] = raw.charCodeAt(i);
+            }
+            return outputArray.buffer;
+        }
+
+        /** Converts an ArrayBuffer to a Base64URL string. */
+        function arrayBufferToBase64Url(buffer) {
+            let binary = '';
+            const bytes = new Uint8Array(buffer);
+            const len = bytes.byteLength;
+            for (let i = 0; i < len; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return window.btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+
+        /** Utility: Display messages */
+        function displayMessage(message, type = 'info') {
+            const box = document.getElementById('message-box');
+            let bgColor = 'bg-blue-100 border-blue-400 text-blue-700';
+            if (type === 'error') bgColor = 'bg-red-100 border-red-400 text-red-700';
+            if (type === 'success') bgColor = 'bg-green-100 border-green-400 text-green-700';
+            
+            box.className = `p-4 mb-4 rounded-lg text-sm font-medium text-center border ${bgColor}`;
+            box.innerHTML = message;
+            box.classList.remove('hidden');
+        };
+
+        function hideMessage() {
+            document.getElementById('message-box').classList.add('hidden');
+        };
+
+        // --- LINK CREATOR LOGIC ---
+
+        window.createSafelink = async function() {
+            const urlInput = document.getElementById('target-url');
+            const resultBox = document.getElementById('result-box');
+            const createBtn = document.getElementById('create-btn');
+            
+            hideMessage();
+
+            const targetUrl = urlInput.value.trim();
+
+            if (!targetUrl) {
+                displayMessage("Please enter the Target URL.", 'error');
+                return;
+            }
+            if (!urlInput.checkValidity()) {
+                 displayMessage("Please enter a valid URL.", 'error');
+                 return;
+            }
+
+            createBtn.disabled = true;
+            createBtn.textContent = "Encoding...";
+
+            try {
+                // 1. Encode the URL using Base64URL
+                const enc = new TextEncoder();
+                const encodedData = arrayBufferToBase64Url(enc.encode(targetUrl));
+
+                // 2. Generate the shareable link (format: ?d=[encoded_url])
+                const baseUrl = window.location.origin + window.location.pathname;
+                const safeLink = `${baseUrl}?d=${encodedData}`;
+
+                // 3. Display result
+                document.getElementById('generated-link').value = safeLink;
+                resultBox.classList.remove('hidden');
+                displayMessage("Hidden Link generated successfully! It's ready to share.", 'success');
+
+            } catch (e) {
+                console.error("Error creating safelink:", e);
+                displayMessage(`Failed to create link. Please try again.`, 'error');
+            } finally {
+                createBtn.disabled = false;
+                createBtn.textContent = "Generate Hidden Link";
+            }
+        }
+
+        // --- LINK DECODER & LOADER LOGIC ---
+
+        /** Checks URL parameters and switches views. */
+        function checkUrlForLink() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const encodedUrl = urlParams.get('d'); // Check for the single 'd' parameter
+
+            if (encodedUrl) {
+                 // Show Loader/Countdown Section immediately
+                document.getElementById('creator-section').classList.add('hidden');
+                document.getElementById('unlocker-section').classList.remove('hidden');
+                
+                 try {
+                    // 1. Decode the hidden URL
+                    const rawUrlBuffer = base64UrlToArrayBuffer(encodedUrl);
+                    const targetUrl = new TextDecoder().decode(rawUrlBuffer);
+
+                    displayMessage("Hidden link retrieved. Starting timer...", 'info');
+                    startCountdown(targetUrl);
+                    
+                    return;
+
+                } catch (e) {
+                    console.error("Failed to decode hidden URL:", e);
+                    displayMessage("Link data is corrupted or invalid. Please check the URL.", 'error');
+                    // Ensure countdown display is hidden if link is corrupt
+                    document.getElementById('countdown-display').classList.add('hidden');
+                }
+            } 
+            
+            // Default: Show the Creator Section
+            document.getElementById('creator-section').classList.remove('hidden');
+            document.getElementById('unlocker-section').classList.add('hidden');
+        }
+
+        // --- COUNTDOWN LOGIC ---
+        function startCountdown(targetUrl) {
+            let countdown = 5; // Reduced from 10 to 5 seconds
+            const timerDisplay = document.getElementById('timer');
+            
+            timerDisplay.textContent = countdown;
+
+            const interval = setInterval(() => {
+                countdown--;
+                timerDisplay.textContent = countdown;
+
+                if (countdown <= 0) {
+                    clearInterval(interval);
+                    timerDisplay.textContent = '0';
+                    displayMessage("Redirecting now...", 'success');
+                    // Actual redirection
+                    window.location.replace(targetUrl); // Replaces current history entry
+                }
+            }, 1000);
+        }
+
+        // --- CLIPBOARD UTILITY ---
+        window.copyToClipboard = function(elementId) {
+            const input = document.getElementById(elementId);
+            input.select();
+            input.setSelectionRange(0, 99999); // For mobile devices
+            try {
+                // Use execCommand('copy') for better iframe compatibility
+                document.execCommand('copy'); 
+                displayMessage("Link copied!", 'success');
+            } catch (err) {
+                displayMessage("Failed to copy. Please copy manually.", 'error');
+            }
+        }
+
+        // --- INITIALIZATION ---
+        window.onload = checkUrlForLink;
+        
+    </script>
+</body>
+</html>
+
