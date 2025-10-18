@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yldl4u URL Shortener</title>
+    <!-- Loading Tailwind CSS --><script src="https://cdn.tailwindcss.com"></script>
+    <!-- Loading Google Font (Inter) --><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Setting font and custom styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117; /* GitHub Dark Mode Background */
+            color: #c9d1d9; /* Light text for dark background */
+        }
+        .container {
+            min-height: 100vh;
+        }
+        /* Custom focus styles for URL input field and button */
+        .input-focus:focus {
+            border-color: #2f81f7;
+            box-shadow: 0 0 0 2px #2f81f7;
+        }
+        .btn-primary {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .btn-primary:hover {
+            background-color: #2f81f7;
+            transform: translateY(-1px);
+        }
+        
+        /* --- HD TEXT LOGO STYLES --- */
+        #text-logo {
+            font-size: 3.5rem; /* Larger font size for prominence */
+            line-height: 1;
+            margin-bottom: 2rem;
+            /* Applying a vibrant gradient */
+            background: linear-gradient(90deg, #a78bfa 0%, #ec4899 50%, #60a5fa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            /* Adding text shadow for a sharp, 'HD' glowing effect */
+            text-shadow: 0 0 8px rgba(167, 139, 250, 0.5), 0 0 16px rgba(236, 72, 153, 0.3);
+        }
+        /* --- END HD TEXT LOGO STYLES --- */
+    </style>
+</head>
+<body class="p-4">
+
+    <div class="container flex flex-col items-center justify-center p-4">
+
+        <!-- Main Card/Box --><div class="w-full max-w-lg bg-[#161b22] p-8 rounded-xl shadow-2xl border border-[#21262d]">
+
+            <!-- HD Text Logo -->
+            <h1 class="font-extrabold text-center" id="text-logo">
+                Yldl4u
+            </h1>
+            
+            <p class="text-center text-sm mb-8 text-[#8b949e]">
+                Quickly and easily shorten any long URL using Rebrandly.
+            </p>
+            
+            <!-- API Key Warning --><div id="api-warning" class="bg-red-900 border border-red-700 text-red-300 p-3 rounded-lg text-sm mb-6">
+                <p class="font-semibold mb-1">⚠️ Please Add Your Key:</p>
+                <p>This tool requires you to add your API Key to the **REBRANDLY_API_KEY** constant in the JavaScript code.</p>
+            </div>
+
+            <!-- Input Form --><div>
+                <label for="long-url" class="block text-sm font-medium mb-2 text-[#c9d1d9]">Enter Your Long URL:</label>
+                <input
+                    type="url"
+                    id="long-url"
+                    placeholder="https://example.com/very/long/url/path..."
+                    class="w-full px-4 py-3 mb-4 text-white bg-[#0d1117] border border-[#30363d] rounded-lg input-focus focus:outline-none"
+                    required
+                >
+
+                <button
+                    id="shorten-button"
+                    class="btn-primary w-full bg-pink-600 text-white font-semibold py-3 rounded-lg hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-opacity-50"
+                >
+                    Shorten URL
+                </button>
+            </div>
+
+            <!-- Status and Result Area --><div id="status-message" class="mt-4 p-3 rounded-lg text-center font-medium hidden">
+                <!-- Status or error message will be displayed here --></div>
+
+            <!-- Shortened URL Display Area --><div id="result-area" class="mt-8 pt-6 border-t border-[#30363d] hidden">
+                <p class="text-sm font-medium mb-3 text-pink-400">Your Short URL:</p>
+                <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3">
+                    
+                    <input
+                        type="text"
+                        id="short-url-output"
+                        readonly
+                        class="flex-grow px-4 py-3 text-white bg-[#0d1117] border border-[#30363d] rounded-lg cursor-pointer focus:outline-none"
+                    />
+                    
+                    <button
+                        id="copy-button"
+                        class="bg-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition duration-150 ease-in-out"
+                    >
+                        Copy
+                    </button>
+                </div>
+            </div>
+            
+        </div>
+        
+        <footer class="mt-8 text-xs text-[#8b949e]">
+            <p>Built using the Rebrandly API. Powered by Yldl4u.</p>
+        </footer>
+    </div>
+
+    <script>
+        // ==============================================================================
+        //  1. API KEY Placement: Paste your Key within these quotes
+        // ==============================================================================
+        const REBRANDLY_API_KEY = "20a863db678344298d430b28d0735398"; 
+
+        // Rebrandly Shortening API Endpoint
+        const SHORTEN_API_URL = "https://api.rebrandly.com/v1/links";
+        
+        // Selecting DOM elements
+        const longUrlInput = document.getElementById('long-url');
+        const shortenButton = document.getElementById('shorten-button');
+        const statusMessage = document.getElementById('status-message');
+        const resultArea = document.getElementById('result-area');
+        const shortUrlOutput = document.getElementById('short-url-output');
+        const copyButton = document.getElementById('copy-button');
+
+        /**
+         * Function to display and hide status messages
+         * @param {string} message - Message to display
+         * @param {string} type - 'success', 'error', or 'loading'
+         */
+        function showStatus(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.classList.remove('hidden', 'bg-red-900', 'bg-green-900', 'bg-indigo-900', 'text-red-300', 'text-green-300', 'text-indigo-300');
+
+            if (type === 'loading') {
+                statusMessage.classList.add('bg-indigo-900', 'text-indigo-300');
+            } else if (type === 'error') {
+                statusMessage.classList.add('bg-red-900', 'text-red-300');
+            } else if (type === 'success') {
+                statusMessage.classList.add('bg-green-900', 'text-green-300');
+            }
+            statusMessage.classList.remove('hidden');
+        }
+
+        /**
+         * Handles the URL shortener API call (for Rebrandly)
+         */
+        async function handleShorten() {
+            const longUrl = longUrlInput.value.trim();
+            resultArea.classList.add('hidden'); // Hide previous results
+
+            if (!longUrl) {
+                showStatus("Please enter a valid URL.", 'error');
+                return;
+            }
+
+            // Simple URL validity check
+            try {
+                new URL(longUrl);
+            } catch (e) {
+                showStatus("The URL you entered is not valid.", 'error');
+                return;
+            }
+            
+            // API token check
+            if (!REBRANDLY_API_KEY) {
+                showStatus("Error: Rebrandly API Key is not set. Please add the Key.", 'error');
+                return;
+            }
+
+            showStatus("Shortening URL...", 'loading');
+            shortenButton.disabled = true;
+
+            try {
+                const response = await fetch(SHORTEN_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'apikey': REBRANDLY_API_KEY // This header is required for Rebrandly
+                    },
+                    body: JSON.stringify({ 
+                        destination: longUrl // 'destination' is used for the long URL in Rebrandly
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const shortUrl = data.shortUrl; // Receives 'shortUrl' from the Rebrandly API
+                    
+                    // It usually returns domain+slug, so the protocol is added
+                    shortUrlOutput.value = "https://" + shortUrl; 
+                    resultArea.classList.remove('hidden');
+                    showStatus("URL successfully shortened!", 'success');
+                    
+                } else {
+                    // Handling error messages from the API
+                    let errorMessage = "Shortening failed: An unknown error occurred.";
+                    if (data && data.message) {
+                        errorMessage = `API Error: ${data.message}`;
+                    } else if (data && data.errors && data.errors.length > 0) {
+                        // Rebrandly often returns messages in the errors array
+                        errorMessage = `API Error: ${data.errors[0].message}`; 
+                    }
+                    showStatus(errorMessage, 'error');
+                }
+
+            } catch (error) {
+                console.error("Network Error:", error);
+                showStatus("Issue with network or server connection.", 'error');
+            } finally {
+                shortenButton.disabled = false;
+            }
+        }
+
+        /**
+         * Function to copy the result
+         */
+        function handleCopy() {
+            // Select the content of the input field
+            shortUrlOutput.select();
+            // Extend selection for mobile devices
+            shortUrlOutput.setSelectionRange(0, 99999); 
+            
+            try {
+                // Using document.execCommand('copy')
+                document.execCommand('copy');
+                copyButton.textContent = "Copied!";
+                copyButton.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                copyButton.classList.add('bg-green-600', 'hover:bg-green-700');
+                
+                setTimeout(() => {
+                    copyButton.textContent = "Copy";
+                    copyButton.classList.remove('bg-green-600', 'hover:bg-green-700');
+                    copyButton.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy:', err);
+                showStatus("Failed to copy. Please copy manually.", 'error');
+            }
+        }
+
+
+        // Setting up event listeners
+        shortenButton.addEventListener('click', handleShorten);
+        copyButton.addEventListener('click', handleCopy);
+
+        // Trigger shortening on Enter key press
+        longUrlInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                handleShorten();
+            }
+        });
+
+    </script>
+</body>
+</html>
+
