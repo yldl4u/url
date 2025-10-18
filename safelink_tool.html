@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>পাসওয়ার্ড সুরক্ষিত সেফলিংক টুল</title>
-    <!-- Tailwind CSS CDN -->
+    <title>পাসওয়ার্ড সুরক্ষিত সেফলিংক</title>
+    <!-- Tailwind CSS CDN for modern aesthetics -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* ফন্ট হিসেবে Inter ব্যবহার করা হয়েছে */
@@ -38,7 +38,7 @@
 
     <div class="container-box w-full max-w-lg">
         <h1 class="text-3xl font-extrabold text-gray-900 mb-6 text-center border-b pb-3">
-            🔐 সেফলিংক টুল
+            🔐 সেফলিংক টুল (নো ডেটাবেস)
         </h1>
 
         <!-- Loader/Message Area -->
@@ -49,12 +49,12 @@
             <h2 class="text-xl font-semibold mb-4 text-gray-700">নতুন সেফলিংক তৈরি করুন</h2>
 
             <div class="mb-4">
-                <label for="target-url" class="block text-sm font-medium text-gray-700 mb-2">গন্তব্য URL (যেখানে লিংক যাবে):</label>
+                <label for="target-url" class="block text-sm font-medium text-gray-700 mb-2">গন্তব্য URL:</label>
                 <input type="url" id="target-url" placeholder="https://example.com" class="input-style" required>
             </div>
 
             <div class="mb-6">
-                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">পাসওয়ার্ড সেট করুন:</label>
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">পাসওয়ার্ড সেট করুন (এটি আপনার এনক্রিপশন কী):</label>
                 <input type="password" id="password" placeholder="একটি শক্তিশালী পাসওয়ার্ড দিন" class="input-style" required>
             </div>
 
@@ -75,18 +75,10 @@
 
         <!-- Section 2: Link Unlocker & Countdown -->
         <div id="unlocker-section" class="hidden text-center">
-            <div id="countdown-display" class="hidden">
-                <svg class="animate-spin h-10 w-10 text-blue-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <p class="text-2xl font-bold text-blue-600 mb-2">লিংক খুলছে...</p>
-                <p class="text-6xl font-extrabold text-gray-900" id="timer">10</p>
-                <p class="text-lg text-gray-500 mt-2">অপেক্ষা করুন।</p>
-            </div>
 
             <div id="password-form">
                 <h2 class="text-xl font-semibold mb-4 text-gray-700">সুরক্ষিত লিংকটি আনলক করুন</h2>
+                <p class="text-sm text-gray-500 mb-4">এই লিংকের ডেটা URL-এর মধ্যেই এনক্রিপ্ট করা আছে। সঠিক পাসওয়ার্ড দিন।</p>
                 <div class="mb-6">
                     <label for="unlock-password" class="block text-sm font-medium text-gray-700 mb-2">পাসওয়ার্ড দিন:</label>
                     <input type="password" id="unlock-password" placeholder="পাসওয়ার্ড লিখুন" class="input-style" required>
@@ -96,26 +88,56 @@
                     লিংক আনলক করুন
                 </button>
             </div>
+
+            <div id="countdown-display" class="hidden">
+                <svg class="animate-spin h-10 w-10 text-blue-600 mx-auto mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <p class="text-2xl font-bold text-blue-600 mb-2">লিংক খোলার প্রস্তুতি নিচ্ছে...</p>
+                <p class="text-6xl font-extrabold text-gray-900" id="timer">10</p>
+                <p class="text-lg text-gray-500 mt-2">রিডাইরেক্ট হওয়ার আগে ১০ সেকেন্ড অপেক্ষা করুন।</p>
+            </div>
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, addDoc, getDoc, collection, setDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        
-        // GLOBAL VARIABLES from Canvas Environment
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+    <script>
+        const ALGORITHM = 'AES-GCM';
+        const SALT_LENGTH = 16;
+        const IV_LENGTH = 12; // AES-GCM recommended IV length
+        const ITERATIONS = 100000;
+        const KEY_LENGTH = 256;
 
-        let db;
-        let auth;
-        let isAuthReady = false;
+        // --- Utility Functions for ArrayBuffer <-> Base64URL ---
 
-        // Utility: Display messages
-        const displayMessage = (message, type = 'info') => {
+        /** Converts a Base64URL string to an ArrayBuffer. */
+        function base64UrlToArrayBuffer(base64Url) {
+            let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            // Pad to multiple of 4
+            while (base64.length % 4) {
+                base64 += '=';
+            }
+            const raw = window.atob(base64);
+            const outputArray = new Uint8Array(raw.length);
+            for (let i = 0; i < raw.length; i++) {
+                outputArray[i] = raw.charCodeAt(i);
+            }
+            return outputArray.buffer;
+        }
+
+        /** Converts an ArrayBuffer to a Base64URL string. */
+        function arrayBufferToBase64Url(buffer) {
+            let binary = '';
+            const bytes = new Uint8Array(buffer);
+            const len = bytes.byteLength;
+            for (let i = 0; i < len; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return window.btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+
+        /** Utility: Display messages */
+        function displayMessage(message, type = 'info') {
             const box = document.getElementById('message-box');
             let bgColor = 'bg-blue-100 border-blue-400 text-blue-700';
             if (type === 'error') bgColor = 'bg-red-100 border-red-400 text-red-700';
@@ -126,67 +148,43 @@
             box.classList.remove('hidden');
         };
 
-        const hideMessage = () => {
+        function hideMessage() {
             document.getElementById('message-box').classList.add('hidden');
         };
 
-        // Utility: Simple Hashing (Simulating SHA-256 for password comparison)
-        async function hashPassword(password) {
-            const encoder = new TextEncoder();
-            const data = encoder.encode(password);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        // --- CRYPTO FUNCTIONS ---
+
+        /** Derives a cryptographic key from the password using PBKDF2. */
+        async function getKeyFromPassword(password, salt) {
+            const enc = new TextEncoder();
+            const keyMaterial = await crypto.subtle.importKey(
+                'raw', 
+                enc.encode(password), 
+                { name: 'PBKDF2' }, 
+                false, 
+                ['deriveKey']
+            );
+            return crypto.subtle.deriveKey(
+                {
+                    name: 'PBKDF2',
+                    salt: salt,
+                    iterations: ITERATIONS,
+                    hash: 'SHA-256',
+                },
+                keyMaterial,
+                { name: ALGORITHM, length: KEY_LENGTH },
+                true,
+                ['encrypt', 'decrypt']
+            );
         }
 
-        // --- FIREBASE INITIALIZATION & AUTHENTICATION ---
-        try {
-            const app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-            
-            if (initialAuthToken) {
-                signInWithCustomToken(auth, initialAuthToken)
-                    .then(() => {
-                        console.log("Custom sign-in successful.");
-                        isAuthReady = true;
-                        checkUrlForLink();
-                    })
-                    .catch((error) => {
-                        console.error("Custom sign-in failed. Falling back to anonymous.", error);
-                        signInAnonymously(auth).then(() => {
-                            isAuthReady = true;
-                            checkUrlForLink();
-                        });
-                    });
-            } else {
-                signInAnonymously(auth)
-                    .then(() => {
-                        console.log("Anonymous sign-in successful.");
-                        isAuthReady = true;
-                        checkUrlForLink();
-                    })
-                    .catch((error) => {
-                        console.error("Anonymous sign-in failed:", error);
-                        displayMessage("ফায়ারবেস অথেন্টিকেশনে সমস্যা। অ্যাপ কাজ করবে না।", 'error');
-                    });
-            }
-        } catch (e) {
-            console.error("Firebase Initialization Error:", e);
-            displayMessage("অ্যাপ ইনিশিয়ালাইজেশন ব্যর্থ হয়েছে। কনসোল দেখুন।", 'error');
-        }
+        // --- LINK CREATOR LOGIC ---
 
-
-        // --- LINK CREATOR LOGIC (Section 1) ---
         window.createSafelink = async function() {
-            if (!isAuthReady) {
-                displayMessage("দয়া করে অপেক্ষা করুন, ফায়ারবেস লোড হচ্ছে...", 'info');
-                return;
-            }
-
             const urlInput = document.getElementById('target-url');
             const passwordInput = document.getElementById('password');
             const resultBox = document.getElementById('result-box');
+            const createBtn = document.getElementById('create-btn');
             
             hideMessage();
 
@@ -201,87 +199,66 @@
                  displayMessage("একটি বৈধ URL লিখুন।", 'error');
                  return;
             }
-            
-            document.getElementById('create-btn').disabled = true;
-            document.getElementById('create-btn').textContent = "তৈরি হচ্ছে...";
+
+            createBtn.disabled = true;
+            createBtn.textContent = "এনক্রিপ্ট করা হচ্ছে...";
 
             try {
-                // 1. Hash the password
-                const passwordHash = await hashPassword(password);
+                // 1. Generate a random Salt and IV
+                const salt = crypto.getRandomValues(new Uint8Array(SALT_LENGTH));
+                const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
                 
-                // 2. Define the public collection path
-                const collectionPath = `artifacts/${appId}/public/data/safelinks`;
+                // 2. Derive the key
+                const key = await getKeyFromPassword(password, salt);
+                
+                // 3. Encrypt the URL
+                const enc = new TextEncoder();
+                const ciphertext = await crypto.subtle.encrypt(
+                    { name: ALGORITHM, iv: iv },
+                    key,
+                    enc.encode(targetUrl)
+                );
 
-                // 3. Save to Firestore and get the document ID
-                const docRef = await addDoc(collection(db, collectionPath), {
-                    targetUrl: targetUrl,
-                    passwordHash: passwordHash,
-                    createdAt: new Date().toISOString(),
-                    creatorId: auth.currentUser.uid 
-                });
+                // 4. Encode components for URL safety
+                const encodedSalt = arrayBufferToBase64Url(salt.buffer);
+                const encodedIV = arrayBufferToBase64Url(iv.buffer);
+                const encodedData = arrayBufferToBase64Url(ciphertext);
 
-                // 4. Generate the shareable link (using current page URL and document ID)
+                // 5. Generate the shareable link (using current page URL and encoded data)
                 const baseUrl = window.location.origin + window.location.pathname;
-                const safeLink = `${baseUrl}?id=${docRef.id}`;
+                // Safelink format: ?s=[salt]&iv=[iv]&data=[ciphertext]
+                const safeLink = `${baseUrl}?s=${encodedSalt}&iv=${encodedIV}&data=${encodedData}`;
 
-                // 5. Display result
+                // 6. Display result
                 document.getElementById('generated-link').value = safeLink;
                 resultBox.classList.remove('hidden');
-                displayMessage("সেফলিংক সফলভাবে তৈরি হয়েছে! নিচে কপি করুন।", 'success');
+                displayMessage("সেফলিংক সফলভাবে তৈরি হয়েছে! এই লিংকটিই সুরক্ষিত ডেটা বহন করছে।", 'success');
 
             } catch (e) {
                 console.error("Error creating safelink:", e);
-                displayMessage(`লিংক তৈরি করতে ব্যর্থ: ${e.message}`, 'error');
+                displayMessage(`লিংক তৈরি করতে ব্যর্থ: একটি সাধারণ বা শক্তিশালী পাসওয়ার্ড দিয়ে আবার চেষ্টা করুন।`, 'error');
             } finally {
-                document.getElementById('create-btn').disabled = false;
-                document.getElementById('create-btn').textContent = "সেফলিংক তৈরি করুন";
+                createBtn.disabled = false;
+                createBtn.textContent = "সেফলিংক তৈরি করুন";
             }
         }
 
-        // --- LINK UNLOCKER LOGIC (Section 2) ---
-        let linkData = null; // Stores the fetched Firestore document data
+        // --- LINK UNLOCKER LOGIC ---
 
-        async function fetchLinkData(docId) {
-            if (!isAuthReady) {
-                displayMessage("দয়া করে অপেক্ষা করুন, ফায়ারবেস লোড হচ্ছে...", 'info');
-                return null;
-            }
-            
-            const collectionPath = `artifacts/${appId}/public/data/safelinks`;
-            const docRef = doc(db, collectionPath, docId);
+        let urlData = { salt: null, iv: null, data: null };
 
-            try {
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists()) {
-                    return docSnap.data();
-                } else {
-                    displayMessage("দুঃখিত, এই সেফলিংকটি খুঁজে পাওয়া যায়নি বা মেয়াদ উত্তীর্ণ হয়েছে।", 'error');
-                    return null;
-                }
-            } catch (e) {
-                console.error("Error fetching document:", e);
-                displayMessage("ডাটাবেস থেকে তথ্য আনতে ব্যর্থ।", 'error');
-                return null;
-            }
-        }
-
-        async function checkUrlForLink() {
+        /** Checks URL parameters and switches views. */
+        function checkUrlForLink() {
             const urlParams = new URLSearchParams(window.location.search);
-            const id = urlParams.get('id');
+            urlData.salt = urlParams.get('s');
+            urlData.iv = urlParams.get('iv');
+            urlData.data = urlParams.get('data');
 
-            if (id) {
+            if (urlData.salt && urlData.iv && urlData.data) {
                 // Show Unlocker Section
                 document.getElementById('creator-section').classList.add('hidden');
                 document.getElementById('unlocker-section').classList.remove('hidden');
-
-                // Fetch data
-                displayMessage("লিংক ডেটা লোড হচ্ছে...", 'info');
-                linkData = await fetchLinkData(id);
                 hideMessage();
-
-                if (!linkData) {
-                    document.getElementById('password-form').classList.add('hidden');
-                }
             } else {
                 // Show Creator Section (Default)
                 document.getElementById('creator-section').classList.remove('hidden');
@@ -291,40 +268,49 @@
 
         window.unlockLink = async function() {
             const unlockPassword = document.getElementById('unlock-password').value.trim();
+            const unlockBtn = document.getElementById('unlock-btn');
             
             if (!unlockPassword) {
                 displayMessage("দয়া করে পাসওয়ার্ড লিখুন।", 'error');
                 return;
             }
             
-            document.getElementById('unlock-btn').disabled = true;
-            document.getElementById('unlock-btn').textContent = "চেক করা হচ্ছে...";
+            unlockBtn.disabled = true;
+            unlockBtn.textContent = "ডিক্রিপ্ট করা হচ্ছে...";
             hideMessage();
 
-            if (!linkData) {
-                displayMessage("লিংকের ডেটা লোড হয়নি। পেজ রিফ্রেশ করে আবার চেষ্টা করুন।", 'error');
-                document.getElementById('unlock-btn').disabled = false;
-                document.getElementById('unlock-btn').textContent = "লিংক আনলক করুন";
-                return;
-            }
-
             try {
-                const enteredHash = await hashPassword(unlockPassword);
-                
-                if (enteredHash === linkData.passwordHash) {
-                    displayMessage("পাসওয়ার্ড সঠিক! ১০ সেকেন্ড অপেক্ষা করুন...", 'success');
-                    document.getElementById('password-form').classList.add('hidden');
-                    document.getElementById('countdown-display').classList.remove('hidden');
-                    startCountdown(linkData.targetUrl);
-                } else {
-                    displayMessage("ভুল পাসওয়ার্ড। আবার চেষ্টা করুন।", 'error');
-                }
+                // 1. Decode URL components
+                const saltBuffer = base64UrlToArrayBuffer(urlData.salt);
+                const ivBuffer = base64UrlToArrayBuffer(urlData.iv);
+                const dataBuffer = base64UrlToArrayBuffer(urlData.data);
+
+                // 2. Derive the key using the entered password
+                const key = await getKeyFromPassword(unlockPassword, saltBuffer);
+
+                // 3. Decrypt the data
+                const decryptedBuffer = await crypto.subtle.decrypt(
+                    { name: ALGORITHM, iv: ivBuffer },
+                    key,
+                    dataBuffer
+                );
+
+                // 4. Convert ArrayBuffer back to URL string
+                const dec = new TextDecoder();
+                const targetUrl = dec.decode(decryptedBuffer);
+
+                // 5. Decryption successful: Start countdown
+                displayMessage("পাসওয়ার্ড সঠিক! ১০ সেকেন্ড অপেক্ষা করুন...", 'success');
+                document.getElementById('password-form').classList.add('hidden');
+                document.getElementById('countdown-display').classList.remove('hidden');
+                startCountdown(targetUrl);
+
             } catch (e) {
-                console.error("Error during unlocking:", e);
-                displayMessage("আনলক করার সময় ত্রুটি হয়েছে।", 'error');
-            } finally {
-                document.getElementById('unlock-btn').disabled = false;
-                document.getElementById('unlock-btn').textContent = "লিংক আনলক করুন";
+                // Decryption failure typically means the wrong key was used
+                console.error("Decryption failed:", e);
+                displayMessage("ভুল পাসওয়ার্ড। ডেটা ডিক্রিপ্ট করা সম্ভব হয়নি। আবার চেষ্টা করুন।", 'error');
+                unlockBtn.disabled = false;
+                unlockBtn.textContent = "লিংক আনলক করুন";
             }
         }
 
@@ -344,7 +330,7 @@
                     timerDisplay.textContent = '০';
                     displayMessage("রিডাইরেক্ট হচ্ছে...", 'success');
                     // Actual redirection
-                    window.location.href = targetUrl;
+                    window.location.replace(targetUrl); // Replaces current history entry
                 }
             }, 1000);
         }
@@ -355,15 +341,16 @@
             input.select();
             input.setSelectionRange(0, 99999); // For mobile devices
             try {
-                document.execCommand('copy');
+                // Use execCommand('copy') for better iframe compatibility
+                document.execCommand('copy'); 
                 displayMessage("লিংক কপি করা হয়েছে!", 'success');
             } catch (err) {
                 displayMessage("কপি করতে ব্যর্থ হয়েছেন। ম্যানুয়ালি কপি করুন।", 'error');
             }
         }
 
-        // Initialize check when auth is ready (called inside the auth block)
-        // checkUrlForLink();
+        // --- INITIALIZATION ---
+        window.onload = checkUrlForLink;
         
     </script>
 </body>
