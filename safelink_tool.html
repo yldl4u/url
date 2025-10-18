@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>পাসওয়ার্ড সুরক্ষিত সেফলিংক</title>
+    <title>Password Protected SafeLink</title>
     <!-- Tailwind CSS CDN for modern aesthetics -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* ফন্ট হিসেবে Inter ব্যবহার করা হয়েছে */
+        /* Using Inter font */
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f7f9fb;
@@ -38,7 +38,7 @@
 
     <div class="container-box w-full max-w-lg">
         <h1 class="text-3xl font-extrabold text-gray-900 mb-6 text-center border-b pb-3">
-            🔐 সেফলিংক টুল (নো ডেটাবেস)
+            🔐 SafeLink Tool (Client Only)
         </h1>
 
         <!-- Loader/Message Area -->
@@ -46,29 +46,29 @@
 
         <!-- Section 1: Link Creator -->
         <div id="creator-section">
-            <h2 class="text-xl font-semibold mb-4 text-gray-700">নতুন সেফলিংক তৈরি করুন</h2>
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">Create New SafeLink</h2>
 
             <div class="mb-4">
-                <label for="target-url" class="block text-sm font-medium text-gray-700 mb-2">গন্তব্য URL:</label>
+                <label for="target-url" class="block text-sm font-medium text-gray-700 mb-2">Target URL:</label>
                 <input type="url" id="target-url" placeholder="https://example.com" class="input-style" required>
             </div>
 
             <div class="mb-6">
-                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">পাসওয়ার্ড সেট করুন (এটি আপনার এনক্রিপশন কী):</label>
-                <input type="password" id="password" placeholder="একটি শক্তিশালী পাসওয়ার্ড দিন" class="input-style" required>
+                <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Set Password (Your Encryption Key):</label>
+                <input type="password" id="password" placeholder="Enter a strong password" class="input-style" required>
             </div>
 
             <button id="create-btn" onclick="createSafelink()"
                     class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition duration-150 shadow-lg active:bg-blue-800">
-                সেফলিংক তৈরি করুন
+                Generate SafeLink
             </button>
 
             <!-- Generated Link Output -->
             <div id="result-box" class="hidden mt-6 bg-gray-100 p-4 rounded-lg border border-dashed border-gray-300">
-                <p class="text-sm font-medium text-gray-700 mb-2">আপনার সুরক্ষিত লিংক:</p>
+                <p class="text-sm font-medium text-gray-700 mb-2">Your Secure Link:</p>
                 <input type="text" id="generated-link" readonly class="input-style bg-gray-50 text-blue-600 font-mono text-xs cursor-text select-all" onclick="this.select()">
                 <button onclick="copyToClipboard('generated-link')" class="mt-2 w-full py-2 text-sm bg-green-500 text-white rounded-lg hover:bg-green-600 transition">
-                    কপি করুন
+                    Copy
                 </button>
             </div>
         </div>
@@ -77,15 +77,15 @@
         <div id="unlocker-section" class="hidden text-center">
 
             <div id="password-form">
-                <h2 class="text-xl font-semibold mb-4 text-gray-700">সুরক্ষিত লিংকটি আনলক করুন</h2>
-                <p class="text-sm text-gray-500 mb-4">এই লিংকের ডেটা URL-এর মধ্যেই এনক্রিপ্ট করা আছে। সঠিক পাসওয়ার্ড দিন।</p>
+                <h2 class="text-xl font-semibold mb-4 text-gray-700">Unlock Secure Link</h2>
+                <p class="text-sm text-gray-500 mb-4">This link's data is encrypted within the URL. Enter the correct password.</p>
                 <div class="mb-6">
-                    <label for="unlock-password" class="block text-sm font-medium text-gray-700 mb-2">পাসওয়ার্ড দিন:</label>
-                    <input type="password" id="unlock-password" placeholder="পাসওয়ার্ড লিখুন" class="input-style" required>
+                    <label for="unlock-password" class="block text-sm font-medium text-gray-700 mb-2">Enter Password:</label>
+                    <input type="password" id="unlock-password" placeholder="Enter password" class="input-style" required>
                 </div>
                 <button id="unlock-btn" onclick="unlockLink()"
                         class="w-full py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition duration-150 shadow-lg active:bg-red-800">
-                    লিংক আনলক করুন
+                    Unlock Link
                 </button>
             </div>
 
@@ -94,10 +94,17 @@
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <p class="text-2xl font-bold text-blue-600 mb-2">লিংক খোলার প্রস্তুতি নিচ্ছে...</p>
+                <p class="text-2xl font-bold text-blue-600 mb-2">Preparing to Open Link...</p>
                 <p class="text-6xl font-extrabold text-gray-900" id="timer">10</p>
-                <p class="text-lg text-gray-500 mt-2">রিডাইরেক্ট হওয়ার আগে ১০ সেকেন্ড অপেক্ষা করুন।</p>
+                <p class="text-lg text-gray-500 mt-2">Please wait 10 seconds before redirection.</p>
             </div>
+        </div>
+        
+        <!-- Footer Credit -->
+        <div class="mt-8 pt-4 border-t border-gray-200 text-center">
+            <p class="text-xs text-gray-500">
+                Created by Yldl4u
+            </p>
         </div>
     </div>
 
@@ -136,7 +143,7 @@
             return window.btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
         }
 
-        /** Utility: Display messages */
+        /** Utility: Display messages (Updated to English) */
         function displayMessage(message, type = 'info') {
             const box = document.getElementById('message-box');
             let bgColor = 'bg-blue-100 border-blue-400 text-blue-700';
@@ -192,16 +199,16 @@
             const password = passwordInput.value.trim();
 
             if (!targetUrl || !password) {
-                displayMessage("দয়া করে লক্ষ্য URL এবং একটি পাসওয়ার্ড লিখুন।", 'error');
+                displayMessage("Please enter the Target URL and a password.", 'error');
                 return;
             }
             if (!urlInput.checkValidity()) {
-                 displayMessage("একটি বৈধ URL লিখুন।", 'error');
+                 displayMessage("Please enter a valid URL.", 'error');
                  return;
             }
 
             createBtn.disabled = true;
-            createBtn.textContent = "এনক্রিপ্ট করা হচ্ছে...";
+            createBtn.textContent = "Encrypting...";
 
             try {
                 // 1. Generate a random Salt and IV
@@ -232,14 +239,14 @@
                 // 6. Display result
                 document.getElementById('generated-link').value = safeLink;
                 resultBox.classList.remove('hidden');
-                displayMessage("সেফলিংক সফলভাবে তৈরি হয়েছে! এই লিংকটিই সুরক্ষিত ডেটা বহন করছে।", 'success');
+                displayMessage("SafeLink generated successfully! This link carries the encrypted data.", 'success');
 
             } catch (e) {
                 console.error("Error creating safelink:", e);
-                displayMessage(`লিংক তৈরি করতে ব্যর্থ: একটি সাধারণ বা শক্তিশালী পাসওয়ার্ড দিয়ে আবার চেষ্টা করুন।`, 'error');
+                displayMessage(`Failed to create link: Try again with a simple or strong password.`, 'error');
             } finally {
                 createBtn.disabled = false;
-                createBtn.textContent = "সেফলিংক তৈরি করুন";
+                createBtn.textContent = "Generate SafeLink";
             }
         }
 
@@ -271,12 +278,12 @@
             const unlockBtn = document.getElementById('unlock-btn');
             
             if (!unlockPassword) {
-                displayMessage("দয়া করে পাসওয়ার্ড লিখুন।", 'error');
+                displayMessage("Please enter password.", 'error');
                 return;
             }
             
             unlockBtn.disabled = true;
-            unlockBtn.textContent = "ডিক্রিপ্ট করা হচ্ছে...";
+            unlockBtn.textContent = "Decrypting...";
             hideMessage();
 
             try {
@@ -300,7 +307,7 @@
                 const targetUrl = dec.decode(decryptedBuffer);
 
                 // 5. Decryption successful: Start countdown
-                displayMessage("পাসওয়ার্ড সঠিক! ১০ সেকেন্ড অপেক্ষা করুন...", 'success');
+                displayMessage("Password correct! Waiting 10 seconds...", 'success');
                 document.getElementById('password-form').classList.add('hidden');
                 document.getElementById('countdown-display').classList.remove('hidden');
                 startCountdown(targetUrl);
@@ -308,9 +315,9 @@
             } catch (e) {
                 // Decryption failure typically means the wrong key was used
                 console.error("Decryption failed:", e);
-                displayMessage("ভুল পাসওয়ার্ড। ডেটা ডিক্রিপ্ট করা সম্ভব হয়নি। আবার চেষ্টা করুন।", 'error');
+                displayMessage("Incorrect password. Data could not be decrypted. Please try again.", 'error');
                 unlockBtn.disabled = false;
-                unlockBtn.textContent = "লিংক আনলক করুন";
+                unlockBtn.textContent = "Unlock Link";
             }
         }
 
@@ -327,8 +334,8 @@
 
                 if (countdown <= 0) {
                     clearInterval(interval);
-                    timerDisplay.textContent = '০';
-                    displayMessage("রিডাইরেক্ট হচ্ছে...", 'success');
+                    timerDisplay.textContent = '0';
+                    displayMessage("Redirecting...", 'success');
                     // Actual redirection
                     window.location.replace(targetUrl); // Replaces current history entry
                 }
@@ -343,9 +350,9 @@
             try {
                 // Use execCommand('copy') for better iframe compatibility
                 document.execCommand('copy'); 
-                displayMessage("লিংক কপি করা হয়েছে!", 'success');
+                displayMessage("Link copied!", 'success');
             } catch (err) {
-                displayMessage("কপি করতে ব্যর্থ হয়েছেন। ম্যানুয়ালি কপি করুন।", 'error');
+                displayMessage("Failed to copy. Please copy manually.", 'error');
             }
         }
 
